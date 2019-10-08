@@ -20,7 +20,8 @@ import com.mysql.cj.jdbc.MysqlXADataSource;
 
 @Configuration
 public class ApplicationConfiguration {
-	
+   
+	//Transaction manager must be instantiated BEFORE
    @Bean("ApplicationEntityManager")
    @DependsOn("JTATXManager")
    public EntityManagerFactory entityManagerFactory(@Qualifier("hibernate-props") Properties properties, RoutingDatasource routingDS) {
