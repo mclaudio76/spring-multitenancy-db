@@ -10,7 +10,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
 @Component
-public class MultiTenantFilter implements HandlerInterceptor {
+public class TenantInterceptor implements HandlerInterceptor {
 
 	  private static final String TENANT_HEADER_NAME = "X-TENANT-ID";
 	  
@@ -31,5 +31,4 @@ public class MultiTenantFilter implements HandlerInterceptor {
 	  public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
 		  TenantContext.setCurrentTenant(null);
 	  }
-	
 }

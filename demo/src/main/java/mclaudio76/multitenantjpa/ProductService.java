@@ -28,7 +28,7 @@ public class ProductService {
 	
 	
 	@Transactional(value = TxType.REQUIRED)
-	@WithTenant(tenantID = MultiTenantFilter.TENANT_B)
+	@WithTenant(tenantID = TenantInterceptor.TENANT_B)
 	public void saveProductSpecific(Product p) {
 		saveProduct(p);
 	}
@@ -38,6 +38,4 @@ public class ProductService {
 		saveProduct(px);
 		saveProductSpecific(px);
 	}
-	
-	
 }

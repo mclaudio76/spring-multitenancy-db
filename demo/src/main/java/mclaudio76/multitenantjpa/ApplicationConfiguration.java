@@ -41,10 +41,10 @@ public class ApplicationConfiguration {
    public RoutingDatasource getRoutingDS() {
 	   RoutingDatasource ds = new RoutingDatasource();
 	   Map<Object, Object> availDS = new HashMap<>();
-	   availDS.put(MultiTenantFilter.TENANT_A, buildDataSource("XADS1","jdbc:mysql://localhost:3306/mydatabase", "dbuser",  "dbuser"));
-	   availDS.put(MultiTenantFilter.TENANT_B, buildDataSource("XADS2","jdbc:mysql://localhost:3306/anotherDB",  "secuser", "secuser"));
+	   availDS.put(TenantInterceptor.TENANT_A, buildDataSource("XADS1","jdbc:mysql://localhost:3306/mydatabase", "dbuser",  "dbuser"));
+	   availDS.put(TenantInterceptor.TENANT_B, buildDataSource("XADS2","jdbc:mysql://localhost:3306/anotherDB",  "secuser", "secuser"));
 	   ds.setTargetDataSources(availDS);
-	   ds.setDefaultTargetDataSource(availDS.get(MultiTenantFilter.TENANT_A));
+	   ds.setDefaultTargetDataSource(availDS.get(TenantInterceptor.TENANT_A));
 	   ds.afterPropertiesSet();
 	   return ds;
    }

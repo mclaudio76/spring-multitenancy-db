@@ -6,10 +6,10 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Component
-public class TenantContextInterceptor implements WebMvcConfigurer {
+public class WebConfiguration implements WebMvcConfigurer {
    
    @Autowired
-   MultiTenantFilter tenantResolver;
+   TenantInterceptor tenantResolver;
 
    @Override
    public void addInterceptors(InterceptorRegistry registry) {
