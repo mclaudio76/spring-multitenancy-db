@@ -18,6 +18,8 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 
 import com.mysql.cj.jdbc.MysqlXADataSource;
 
+import mclaudio76.multitenantjpa.tenant.TenantInterceptor;
+
 @Configuration
 public class ApplicationConfiguration {
    

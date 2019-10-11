@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import mclaudio76.multitenantjpa.entities.Product;
+import mclaudio76.multitenantjpa.tenant.TenantContext;
 
 @RestController
 public class Endpoint {

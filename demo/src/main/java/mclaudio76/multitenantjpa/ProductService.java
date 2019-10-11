@@ -8,6 +8,7 @@ import javax.transaction.Transactional.TxType;
 import org.springframework.stereotype.Service;
 
 import mclaudio76.multitenantjpa.entities.Product;
+import mclaudio76.multitenantjpa.tenant.TenantInterceptor;
 
 @Service
 public class ProductService {

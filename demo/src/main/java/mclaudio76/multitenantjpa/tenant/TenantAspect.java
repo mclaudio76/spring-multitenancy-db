@@ -1,4 +1,4 @@
-package mclaudio76.multitenantjpa;
+package mclaudio76.multitenantjpa.tenant;
 
 import java.lang.reflect.Method;
 import java.util.logging.Logger;
@@ -10,6 +10,8 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
+
+import mclaudio76.multitenantjpa.WithTenant;
 	
 @Component
 @Aspect

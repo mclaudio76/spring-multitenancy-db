@@ -1,4 +1,4 @@
-package mclaudio76.multitenantjpa;
+package mclaudio76.multitenantjpa.tenant;
 
 public class TenantContext {
     private static ThreadLocal<String> currentTenant = new ThreadLocal<>();
