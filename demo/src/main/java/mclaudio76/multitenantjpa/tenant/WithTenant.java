@@ -1,4 +1,4 @@
-package mclaudio76.multitenantjpa;
+package mclaudio76.multitenantjpa.tenant;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

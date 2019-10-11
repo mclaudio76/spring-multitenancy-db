@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import mclaudio76.multitenantjpa.entities.Product;
 import mclaudio76.multitenantjpa.tenant.TenantInterceptor;
+import mclaudio76.multitenantjpa.tenant.WithTenant;
 
 @Service
 public class ProductService {
