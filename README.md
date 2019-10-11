@@ -122,9 +122,13 @@ public EntityManagerFactory entityManagerFactory(@Qualifier("hibernate-props") P
 
 ```
 
+Here, it's important to note that in this example I choose to hardcode (for sake of semplicity) the list of available datasources. Generally speaking, nothing prevents you to load dinamically a list of available datasource from some kind of support (an XML file, a Properties file or even a database table)
+and use it dinamically in the code.
+
+
 ### ProductService
 
-Finally, we can define a simple @Service class to perform actual db save:
+Finally, we can define a simple @Service class to perform actual db operation.
 
 ```
 @Service
@@ -158,6 +162,14 @@ public class ProductService {
 	}
 }
 ```
+
+There's nothing particular here to notice, except for the usage of the ```@WithTenant``` annotation:
+this is a custom annotation that tells Spring - via AOP - to force the use of a specific tenant-ID,
+regardless the current one, to perform a save operation. Pratically, this means that each operation on
+Tenant-A is also automatically performed on Tenant-B database.
+
+
+
 
 
 
