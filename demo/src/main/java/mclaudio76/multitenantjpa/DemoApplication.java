@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 public class DemoApplication {
 
 	public static void main(String[] args) {
+		System.getProperties().put("com.atomikos.icatch.default_jta_timeout", "127000");
 		SpringApplication.run(DemoApplication.class, args);
 	}
 

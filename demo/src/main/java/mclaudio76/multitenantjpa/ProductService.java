@@ -19,13 +19,21 @@ public class ProductService {
 	
 	@Transactional(value = TxType.REQUIRED)
 	public void saveProduct(Product x) {
-		Product p 	  = em.find(Product.class, x.productID);
-		if(p == null) {
-			p = new Product();
-			p.productID   = x.productID;
+		try {
+			int waitTime = (int)(7000*Math.random());
+			System.out.println(em.toString()+" waits for "+waitTime+" before running...");
+			Thread.sleep(waitTime);
+			Product p 	  = em.find(Product.class, x.productID);
+			if(p == null) {
+				p = new Product();
+				p.productID   = x.productID;
+			}
+			p.description = x.description;
+			em.persist(p);
 		}
-		p.description = x.description;
-		em.persist(p);
+		catch(Exception e) {
+			
+		}
 	}
 	
 	
@@ -38,6 +46,7 @@ public class ProductService {
 	@Transactional(value = TxType.REQUIRED)
 	public void saveBoth(Product px) {
 		saveProduct(px);
+		px.description = "Forced from tenant A";
 		saveProductSpecific(px);
 	}
 }
