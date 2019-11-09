@@ -14,8 +14,16 @@ import mclaudio76.multitenantjpa.tenant.WithTenant;
 @Service
 public class ProductService {
 
+	
+	private EntityManager em;
+	
 	@PersistenceContext
-	EntityManager em;
+	public void setEntityManager(EntityManager x) {
+		this.em = x;
+		System.out.println(x+ " injected ");
+	}
+	
+	
 	
 	@Transactional(value = TxType.REQUIRED)
 	public void saveProduct(Product x) {
