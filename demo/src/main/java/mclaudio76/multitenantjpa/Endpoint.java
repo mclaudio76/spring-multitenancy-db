@@ -16,7 +16,7 @@ public class Endpoint {
 	
 	@PostMapping(path = "/postentry",consumes = "application/json")
 	public String execute(@RequestBody Product x) {
-		pService.saveBoth(x);
+		pService.saveProductOnBothTenants(x);
 		return "Entity has been persisted on tenant "+TenantContext.getCurrentTenant()+"\n";
 	}
 	

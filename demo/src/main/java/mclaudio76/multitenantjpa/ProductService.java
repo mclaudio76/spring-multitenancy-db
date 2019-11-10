@@ -1,60 +1,83 @@
 package mclaudio76.multitenantjpa;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
-import javax.transaction.Transactional.TxType;
 
 import org.springframework.stereotype.Service;
 
 import mclaudio76.multitenantjpa.entities.Product;
-import mclaudio76.multitenantjpa.tenant.TenantInterceptor;
-import mclaudio76.multitenantjpa.tenant.WithTenant;
 
 @Service
-public class ProductService {
-
+public class ProductService  {
+	
 	
 	private EntityManager em;
+	private EntityManager emAlt;
+	
 	
 	@PersistenceContext
-	public void setEntityManager(EntityManager x) {
-		this.em = x;
-		System.out.println(x+ " injected ");
+	public void setEntityManager(EntityManager em) {
+		this.em = em;
+		System.out.println(" Inject entity manager "+em);
+	}
+	
+	// For specific usage when needed to force a TENANT
+	@PersistenceContext(unitName = "TENANT-B")
+	public void setAlternateEntityManager(EntityManager em) {
+		this.emAlt = em;
+		System.out.println(" Inject entity manager "+emAlt);
+	}
+
+	
+	private AtomicInteger ID = new AtomicInteger(0);
+	
+	
+	@Transactional
+	public void saveProduct(Product x) {
+		saveProduct(x,em);
+	}
+	
+	@Transactional
+	public void saveProductSpecific(Product p) {
+		p.description = p.description + "(FORCED ON B)";
+		saveProduct(p,emAlt);
 	}
 	
 	
+	@Transactional
+	public void saveProductOnBothTenants(Product x) {
+		saveProduct(x);
+		saveProductSpecific(x);
+	}
 	
-	@Transactional(value = TxType.REQUIRED)
-	public void saveProduct(Product x) {
+	
+	private void saveProduct(Product x, EntityManager contextEM) {
 		try {
+			int locID = ID.addAndGet(1);
+			System.out.println(" Transaction START "+locID+ " "+contextEM.toString());
 			int waitTime = (int)(7000*Math.random());
-			System.out.println(em.toString()+" waits for "+waitTime+" before running...");
 			Thread.sleep(waitTime);
-			Product p 	  = em.find(Product.class, x.productID);
+			Product p 	  = contextEM.find(Product.class, x.productID);
 			if(p == null) {
 				p = new Product();
 				p.productID   = x.productID;
 			}
 			p.description = x.description;
-			em.persist(p);
+			contextEM.persist(p);
+			System.out.println(" Transaction END "+locID);
 		}
 		catch(Exception e) {
-			
+			System.err.println(" Error -> "+e.getMessage());
 		}
 	}
+
 	
 	
-	@Transactional(value = TxType.REQUIRED)
-	@WithTenant(tenantID = TenantInterceptor.TENANT_B)
-	public void saveProductSpecific(Product p) {
-		saveProduct(p);
-	}
+
+
 	
-	@Transactional(value = TxType.REQUIRED)
-	public void saveBoth(Product px) {
-		saveProduct(px);
-		px.description = "Forced from tenant A";
-		saveProductSpecific(px);
-	}
+	
 }

@@ -1,17 +1,22 @@
 package mclaudio76.multitenantjpa;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.jta.atomikos.AtomikosDataSourceBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
@@ -22,34 +27,55 @@ import mclaudio76.multitenantjpa.tenant.TenantInterceptor;
 
 @Configuration
 public class ApplicationConfiguration {
+	
+	@Autowired
+	GenericApplicationContext ctx;
    
-	//Transaction manager must be instantiated BEFORE datasources are created.
-   @Bean("ApplicationEntityManager")
-   @DependsOn("JTATXManager")
-   public EntityManagerFactory entityManagerFactory(@Qualifier("hibernate-props") Properties properties, RoutingDatasource routingDS) {
-        LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
-        em.setDataSource(routingDS);
-        em.setPackagesToScan(new String[] { "mclaudio76.multitenantjpa.entities" });
-        JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
-        em.setJpaVendorAdapter(vendorAdapter);
-        em.setPersistenceUnitName("AppEntityManager");
-        em.setJpaProperties(properties);
-        em.afterPropertiesSet();
-        return em.getNativeEntityManagerFactory();
-    }
 
-   
    @Bean
-   public RoutingDatasource getRoutingDS() {
+   @DependsOn("JTATXManager")
+   @Primary
+   public EntityManagerFactory entityManagerFactory(@Qualifier("hibernate-props") Properties properties) {
+	    RoutingDatasource routingDS = getRoutingDS(TenantInterceptor.TENANT_A, TenantInterceptor.TENANT_B) ;
+	    EntityManagerFactory alfa = createEntityManagerFactory(properties, routingDS,"AppEntityManager");
+        return alfa;
+   }
+   
+   
+   @Bean(name = "TENANT-B")
+   @DependsOn("JTATXManager")
+   public EntityManagerFactory alternativeEntityManager(@Qualifier("hibernate-props") Properties properties) {
+	   RoutingDatasource routingDS = getRoutingDS(TenantInterceptor.TENANT_B) ;
+	   EntityManagerFactory alfa   = createEntityManagerFactory(properties, routingDS,"TENANT-B");
+       return alfa;
+   }
+   
+   
+   private RoutingDatasource getRoutingDS(String ... tenants) {
 	   RoutingDatasource ds = new RoutingDatasource();
 	   Map<Object, Object> availDS = new HashMap<>();
-	   availDS.put(TenantInterceptor.TENANT_A, buildDataSource("XADS1","jdbc:mysql://localhost:3306/mydatabase", "dbuser",  "dbuser"));
-	   availDS.put(TenantInterceptor.TENANT_B, buildDataSource("XADS2","jdbc:mysql://localhost:3306/anotherDB",  "secuser", "secuser"));
+	   String defaultTenant		   = null;
+	   if(tenants != null) {
+		   defaultTenant  = tenants[0];
+		   List<String> requestes = Arrays.asList(tenants);
+		   if(requestes.contains(TenantInterceptor.TENANT_A)) {
+			   availDS.put(TenantInterceptor.TENANT_A, buildDataSource("XADS1","jdbc:mysql://localhost:3306/mydatabase", "dbuser",  "dbuser"));
+		   }
+		   if(requestes.contains(TenantInterceptor.TENANT_B)) {
+			   availDS.put(TenantInterceptor.TENANT_B, buildDataSource("XADS2","jdbc:mysql://localhost:3306/anotherDB",  "secuser", "secuser"));
+		   }
+	   }
+	   else {
+		   defaultTenant  = TenantInterceptor.TENANT_A;
+		   availDS.put(TenantInterceptor.TENANT_A, buildDataSource("XADS1","jdbc:mysql://localhost:3306/mydatabase", "dbuser",  "dbuser"));
+	       availDS.put(TenantInterceptor.TENANT_B, buildDataSource("XADS2","jdbc:mysql://localhost:3306/anotherDB",  "secuser", "secuser"));
+	   }
 	   ds.setTargetDataSources(availDS);
-	   ds.setDefaultTargetDataSource(availDS.get(TenantInterceptor.TENANT_A));
+	   ds.setDefaultTargetDataSource(availDS.get(defaultTenant));
 	   ds.afterPropertiesSet();
 	   return ds;
    }
+   
    
    @Bean("hibernate-props")
    public Properties getHibernateProperties() {
@@ -83,5 +109,18 @@ public class ApplicationConfiguration {
 			return null;
 		}
 	}
+   
+   private EntityManagerFactory createEntityManagerFactory(Properties properties, RoutingDatasource routingDS, String unitName) {
+       LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
+       em.setDataSource(routingDS);
+       em.setPackagesToScan(new String[] { "mclaudio76.multitenantjpa.entities" });
+       JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+       em.setJpaVendorAdapter(vendorAdapter);
+       em.setPersistenceUnitName(unitName);
+       em.setJpaProperties(properties);
+       em.afterPropertiesSet();
+       EntityManagerFactory emf = em.getNativeEntityManagerFactory(); 
+       return emf;
+   }
 	
 }
