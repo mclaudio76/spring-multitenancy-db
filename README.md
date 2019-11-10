@@ -168,6 +168,96 @@ this is a custom annotation that tells Spring - via AOP - to force the use of a 
 regardless the current one, to perform a save operation. Pratically, this means that each operation on
 Tenant-A is also automatically performed on Tenant-B database.
 
+### Update (10.11.2019)
+
+After further experiments, I needed to change ProductService class to the following one, because
+the @WithTenant annotation while able to force usage of a Tenant cannot be used when nested transactions occour.
+Let's suppose I need to save the very same product on two different database, and I want to perform this operation
+in a transactional way, i.e committing or rollbacking both of operation. Since the EntityManager behaves also 
+as a L1 cache, if a single transaction is started the EntityManager actually used (remember: is a PROXY bound to the
+transaction it's running into), if AbtractRoutingDatasource changes the underlying actual connection, the Entity manager
+isn't aware of that, and it may work with stale data, resulting in not hitting the database to perform an UPDATE or a SELECT.
+Moreover, the entity manager flushes at the very end of the global transaction. Which will be tied to the original
+transaction it started from. This means that the EntityManager could write data on the wrong dataSource.
+
+The global solution - i.e using the AbstractRoutingDatasource - is at the very end very helpful and perfectly valid,
+in general sense. Normally a transaction starts and ends involving a single tenant. 
+In such rare cases when one needs to transactionally perform operations on several databases, only two options are left:
+
+- explicitly use a specific EntityManager bound to a specific datasource (i.e, unaware of the tenant, and working always and only
+  on a given database);
+- start two different transactions, using REQUIRES_NEW option when specifying @Transactional access.
+
+
+
+```
+@Service
+public class ProductService  {
+	
+	
+	private EntityManager em;
+	private EntityManager emAlt;
+	
+	
+	@PersistenceContext
+	public void setEntityManager(EntityManager em) {
+		this.em = em;
+		System.out.println(" Inject entity manager "+em);
+	}
+	
+	// For specific usage when needed to force a TENANT
+	@PersistenceContext(unitName = "TENANT-B")
+	public void setAlternateEntityManager(EntityManager em) {
+		this.emAlt = em;
+		System.out.println(" Inject entity manager "+emAlt);
+	}
+
+	
+	private AtomicInteger ID = new AtomicInteger(0);
+	
+	
+	@Transactional
+	public void saveProduct(Product x) {
+		saveProduct(x,em);
+	}
+	
+	@Transactional
+	public void saveProductSpecific(Product p) {
+		p.description = p.description + "(FORCED ON B)";
+		saveProduct(p,emAlt);
+	}
+	
+	
+	@Transactional
+	public void saveProductOnBothTenants(Product x) {
+		saveProduct(x);
+		saveProductSpecific(x);
+	}
+	
+	
+	private void saveProduct(Product x, EntityManager contextEM) {
+		try {
+			int locID = ID.addAndGet(1);
+			System.out.println(" Transaction START "+locID+ " "+contextEM.toString());
+			int waitTime = (int)(7000*Math.random());
+			Thread.sleep(waitTime);
+			Product p 	  = contextEM.find(Product.class, x.productID);
+			if(p == null) {
+				p = new Product();
+				p.productID   = x.productID;
+			}
+			p.description = x.description;
+			contextEM.persist(p);
+			System.out.println(" Transaction END "+locID);
+		}
+		catch(Exception e) {
+			System.err.println(" Error -> "+e.getMessage());
+		}
+	}
+
+}
+```
+
 
 
 
