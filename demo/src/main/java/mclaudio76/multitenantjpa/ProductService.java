@@ -9,6 +9,7 @@ import javax.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import mclaudio76.multitenantjpa.entities.Product;
+import mclaudio76.multitenantjpa.tenant.TenantInterceptor;
 
 @Service
 public class ProductService  {
@@ -21,14 +22,14 @@ public class ProductService  {
 	@PersistenceContext
 	public void setEntityManager(EntityManager em) {
 		this.em = em;
-		System.out.println(" Inject entity manager "+em);
+		System.out.println(" Inject entity manager for request-Tenant"+em);
 	}
 	
 	// For specific usage when needed to force a TENANT
-	@PersistenceContext(unitName = "TENANT-B")
+	@PersistenceContext(unitName = TenantInterceptor.TENANT_B)
 	public void setAlternateEntityManager(EntityManager em) {
 		this.emAlt = em;
-		System.out.println(" Inject entity manager "+emAlt);
+		System.out.println(" Inject entity manager for tenant - B "+emAlt);
 	}
 
 	

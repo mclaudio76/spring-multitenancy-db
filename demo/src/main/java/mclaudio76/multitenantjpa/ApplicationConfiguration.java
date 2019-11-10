@@ -6,15 +6,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.annotation.PostConstruct;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.jta.atomikos.AtomikosDataSourceBean;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
@@ -26,24 +30,41 @@ import mclaudio76.multitenantjpa.tenant.TenantInterceptor;
 @Configuration
 public class ApplicationConfiguration {
 	
+   @Autowired
+   ApplicationContext context;
+	
    @Bean
    @DependsOn("JTATXManager")
    @Primary
    public EntityManagerFactory entityManagerFactory(@Qualifier("hibernate-props") Properties properties) {
 	    RoutingDatasource routingDS = getRoutingDS(TenantInterceptor.TENANT_A, TenantInterceptor.TENANT_B) ;
 	    EntityManagerFactory alfa = createEntityManagerFactory(properties, routingDS,"AppEntityManager");
-        return alfa;
+        // Registering companions..
+	    return alfa;
+   }
+  
+   
+   @PostConstruct
+   public void completeInitializationOfSpecificEntityManagers() {
+	   GenericApplicationContext ctx 	   = (GenericApplicationContext) context;
+	   ctx.registerBean(TenantInterceptor.TENANT_B, EntityManagerFactory.class, () -> prepareSpecificEntityManager(TenantInterceptor.TENANT_B,getHibernateProperties()));
    }
    
-   
-   @Bean(name = "TENANT-B")
+   /*@Bean(name = "TENANT-B")
    @DependsOn("JTATXManager")
    public EntityManagerFactory alternativeEntityManager(@Qualifier("hibernate-props") Properties properties) {
 	   RoutingDatasource routingDS = getRoutingDS(TenantInterceptor.TENANT_B) ;
 	   EntityManagerFactory alfa   = createEntityManagerFactory(properties, routingDS,"TENANT-B");
        return alfa;
+   }*/
+   
+   private EntityManagerFactory prepareSpecificEntityManager(String tenantID, Properties properties) {
+	   RoutingDatasource routingDS = getRoutingDS(tenantID) ;
+	   EntityManagerFactory alfa   = createEntityManagerFactory(properties, routingDS,tenantID);
+       return alfa;
    }
    
+  
    
    /**
     * Here datasources are hard-coded, nothing prevents to load them from an external configuration.
