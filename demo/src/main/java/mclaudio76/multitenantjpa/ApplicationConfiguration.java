@@ -38,8 +38,7 @@ public class ApplicationConfiguration {
    @Primary
    public EntityManagerFactory entityManagerFactory(@Qualifier("hibernate-props") Properties properties) {
 	    RoutingDatasource routingDS = getRoutingDS(TenantInterceptor.TENANT_A, TenantInterceptor.TENANT_B) ;
-	    EntityManagerFactory alfa = createEntityManagerFactory(properties, routingDS,"AppEntityManager");
-        // Registering companions..
+	    EntityManagerFactory alfa   = createEntityManagerFactory(properties, routingDS,"AppEntityManager");
 	    return alfa;
    }
   
@@ -50,21 +49,12 @@ public class ApplicationConfiguration {
 	   ctx.registerBean(TenantInterceptor.TENANT_B, EntityManagerFactory.class, () -> prepareSpecificEntityManager(TenantInterceptor.TENANT_B,getHibernateProperties()));
    }
    
-   /*@Bean(name = "TENANT-B")
-   @DependsOn("JTATXManager")
-   public EntityManagerFactory alternativeEntityManager(@Qualifier("hibernate-props") Properties properties) {
-	   RoutingDatasource routingDS = getRoutingDS(TenantInterceptor.TENANT_B) ;
-	   EntityManagerFactory alfa   = createEntityManagerFactory(properties, routingDS,"TENANT-B");
-       return alfa;
-   }*/
-   
    private EntityManagerFactory prepareSpecificEntityManager(String tenantID, Properties properties) {
 	   RoutingDatasource routingDS = getRoutingDS(tenantID) ;
 	   EntityManagerFactory alfa   = createEntityManagerFactory(properties, routingDS,tenantID);
        return alfa;
    }
    
-  
    
    /**
     * Here datasources are hard-coded, nothing prevents to load them from an external configuration.

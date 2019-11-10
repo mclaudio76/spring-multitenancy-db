@@ -22,7 +22,7 @@ public class ProductService  {
 	@PersistenceContext
 	public void setEntityManager(EntityManager em) {
 		this.em = em;
-		System.out.println(" Inject entity manager for request-Tenant"+em);
+		System.out.println(" Inject entity manager for request-Tenant "+em);
 	}
 	
 	// For specific usage when needed to force a TENANT
