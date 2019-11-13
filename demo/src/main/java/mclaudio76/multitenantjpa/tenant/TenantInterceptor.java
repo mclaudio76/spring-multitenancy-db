@@ -1,6 +1,7 @@
 package mclaudio76.multitenantjpa.tenant;
 
 import java.util.Arrays;
+import static mclaudio76.multitenantjpa.tenant.TenantContext.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -13,9 +14,7 @@ import org.springframework.web.servlet.ModelAndView;
 public class TenantInterceptor implements HandlerInterceptor {
 
 	  private static final String TENANT_HEADER_NAME = "X-TENANT-ID";
-	  
-	  public static  final String TENANT_A			 = "TENANT-A";
-	  public static  final String TENANT_B			 = "TENANT-B";
+	
 
 	  @Override
 	  public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {

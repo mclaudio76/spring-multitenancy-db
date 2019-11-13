@@ -16,8 +16,13 @@ public class Endpoint {
 	
 	@PostMapping(path = "/postentry",consumes = "application/json")
 	public String execute(@RequestBody Product x) {
-		pService.saveProductOnBothTenants(x);
-		return "Entity has been persisted on tenant "+TenantContext.getCurrentTenant()+"\n";
+		try {
+			pService.saveProductOnBothTenants(x);
+			return "Entity has been persisted on tenant "+TenantContext.getCurrentTenant()+"\n";
+		}
+		catch(Exception e) {
+			return "Request rolled back \n";
+		}
 	}
 	
 	

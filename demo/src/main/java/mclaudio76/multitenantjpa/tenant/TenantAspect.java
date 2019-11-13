@@ -21,11 +21,7 @@ public class TenantAspect {
     	String currentTenantID = TenantContext.getCurrentTenant();
     	try {
     		log("Current Tenant "+currentTenantID);
-    		log("Current Entity Manager ");
-    		if(currentTenantID.equals(TenantInterceptor.TENANT_B)) {
-    			
-    		}
-        	MethodSignature signature = (MethodSignature) pjp.getSignature();
+    		MethodSignature signature = (MethodSignature) pjp.getSignature();
             Method method = signature.getMethod();
             WithTenant tenant = method.getAnnotation(WithTenant.class);
             log("Switching to tenant ["+tenant.tenantID()+"]");
