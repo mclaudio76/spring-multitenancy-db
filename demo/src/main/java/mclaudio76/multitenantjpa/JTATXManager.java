@@ -9,7 +9,7 @@ import org.hibernate.engine.transaction.jta.platform.internal.AbstractJtaPlatfor
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@Component("JTATXManager")
+@Component("TransactionManager")
 public class JTATXManager extends AbstractJtaPlatform {
 
 	private static final long serialVersionUID = 1L;

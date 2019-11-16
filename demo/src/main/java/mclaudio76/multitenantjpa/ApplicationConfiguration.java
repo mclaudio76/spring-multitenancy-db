@@ -1,5 +1,8 @@
 package mclaudio76.multitenantjpa;
 
+import static mclaudio76.multitenantjpa.tenant.TenantContext.TENANT_A;
+import static mclaudio76.multitenantjpa.tenant.TenantContext.TENANT_B;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -25,18 +28,14 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 
 import com.mysql.cj.jdbc.MysqlXADataSource;
 
-import mclaudio76.multitenantjpa.tenant.TenantInterceptor;
-import static mclaudio76.multitenantjpa.tenant.TenantContext.*;
-
 @Configuration
 public class ApplicationConfiguration {
 	
    @Autowired
    ApplicationContext context;
 	
-   @Primary
-   @Bean
-   @DependsOn("JTATXManager")
+   @Bean @Primary
+   @DependsOn("TransactionManager")
    public EntityManagerFactory entityManagerFactory(@Qualifier("hibernate-props") Properties properties) {
 	    RoutingDatasource routingDS = getRoutingDS(TENANT_A, TENANT_B) ;
 	    EntityManagerFactory alfa   = createEntityManagerFactory(properties, routingDS,"AppEntityManager");
@@ -48,42 +47,7 @@ public class ApplicationConfiguration {
    public void completeInitializationOfSpecificEntityManagers() {
 	   GenericApplicationContext ctx 	   = (GenericApplicationContext) context;
 	   ctx.registerBean(TENANT_B, EntityManagerFactory.class, () -> prepareSpecificEntityManager(TENANT_B,getHibernateProperties()));
-   }
-   
-   private EntityManagerFactory prepareSpecificEntityManager(String tenantID, Properties properties) {
-	   RoutingDatasource routingDS = getRoutingDS(tenantID) ;
-	   EntityManagerFactory alfa   = createEntityManagerFactory(properties, routingDS,tenantID);
-       return alfa;
-   }
-   
-   
-   /**
-    * Here datasources are hard-coded, nothing prevents to load them from an external configuration.
-    * 
-    */
-   private RoutingDatasource getRoutingDS(String ... tenants) {
-	   RoutingDatasource ds = new RoutingDatasource();
-	   Map<Object, Object> availDS = new HashMap<>();
-	   String defaultTenant		   = null;
-	   if(tenants != null) {
-		   defaultTenant  = tenants[0];
-		   List<String> requestes = Arrays.asList(tenants);
-		   if(requestes.contains(TENANT_A)) {
-			   availDS.put(TENANT_A, buildDataSource("XADS1","jdbc:mysql://localhost:3306/mydatabase", "dbuser",  "dbuser"));
-		   }
-		   if(requestes.contains(TENANT_B)) {
-			   availDS.put(TENANT_B, buildDataSource("XADS2","jdbc:mysql://localhost:3306/anotherDB",  "secuser", "secuser"));
-		   }
-	   }
-	   else {
-		   defaultTenant  = TENANT_A;
-		   availDS.put(TENANT_A, buildDataSource("XADS1","jdbc:mysql://localhost:3306/mydatabase", "dbuser",  "dbuser"));
-	       availDS.put(TENANT_B, buildDataSource("XADS2","jdbc:mysql://localhost:3306/anotherDB",  "secuser", "secuser"));
-	   }
-	   ds.setTargetDataSources(availDS);
-	   ds.setDefaultTargetDataSource(availDS.get(defaultTenant));
-	   ds.afterPropertiesSet();
-	   return ds;
+	   ctx.registerBean(TENANT_A, EntityManagerFactory.class, () -> prepareSpecificEntityManager(TENANT_A,getHibernateProperties()));
    }
    
    
@@ -100,6 +64,42 @@ public class ApplicationConfiguration {
         properties.setProperty("hibernate.transaction.jta.platform", JTATXManager.class.getCanonicalName());
         return properties;
 	}
+   
+   /**
+    * Here datasources are hard-coded, nothing prevents to load them from an external configuration.
+    * 
+    */
+   private RoutingDatasource getRoutingDS(String ... tenants) {
+	   RoutingDatasource ds = new RoutingDatasource();
+	   Map<Object, Object> availDS = new HashMap<>();
+	   String defaultTenant		   = TENANT_A;
+	   if(tenants != null) {
+		   defaultTenant  = tenants[0];
+		   List<String> requestes = Arrays.asList(tenants);
+		   if(requestes.contains(TENANT_A)) {
+			   availDS.put(TENANT_A, buildDataSource("XADS1","jdbc:mysql://localhost:3306/mydatabase", "dbuser",  "dbuser"));
+		   }
+		   if(requestes.contains(TENANT_B)) {
+			   availDS.put(TENANT_B, buildDataSource("XADS2","jdbc:mysql://localhost:3306/anotherDB",  "secuser", "secuser"));
+		   }
+	   }
+	   else {
+		   availDS.put(TENANT_A, buildDataSource("XADS1","jdbc:mysql://localhost:3306/mydatabase", "dbuser",  "dbuser"));
+	       availDS.put(TENANT_B, buildDataSource("XADS2","jdbc:mysql://localhost:3306/anotherDB",  "secuser", "secuser"));
+	   }
+	   ds.setTargetDataSources(availDS);
+	   ds.setDefaultTargetDataSource(availDS.get(defaultTenant));
+	   ds.afterPropertiesSet();
+	   return ds;
+   }
+   
+   private EntityManagerFactory prepareSpecificEntityManager(String tenantID, Properties properties) {
+	   RoutingDatasource routingDS = getRoutingDS(tenantID) ;
+	   EntityManagerFactory alfa   = createEntityManagerFactory(properties, routingDS,tenantID);
+       return alfa;
+   }
+   
+  
    
    private DataSource buildDataSource(String dataSourceID, String url, String user, String pwd) {
 		try {
